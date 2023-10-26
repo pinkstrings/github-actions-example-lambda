@@ -1,0 +1,21 @@
+{
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "declaration": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noEmit": true,
+    "outDir": "dist/",
+    "removeComments": true,
+    "sourceMap": true
+  },
+  "exclude": ["dist", "node_modules", "src/*.spec.mts", "src/**/*.spec.mts"],
+  "include": [
+    "src/*.mts",
+    "src/**/*.mts",
+    "src/utils/add-two.mts",
+    "src/utils/add-two.spec.mts"
+  ]
+}

@@ -1,0 +1,88 @@
+name: Deploy to Lambda
+
+on:
+  push:
+    branches:
+      - 'deploy/lambda/dev'
+      - 'deploy/lambda/prod'
+
+env:
+  # set this to your preferred AWS region, e.g. us-west-1
+  AWS_REGION: 'us-east-2'
+  # this is the name of our lambda function
+  PACKAGE_NAME: 'gh-actions-lambda'
+  # set a default value for DEPLOY_ENV
+  DEPLOY_ENV: ''
+
+jobs:
+  deploy_lambda:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Check secret exists: 'AWS_ACCESS_KEY_ID'"
+        run: |
+          if [ "${{ secrets.AWS_ACCESS_KEY_ID }}" == '' ]; then
+            echo "Missing secret: AWS_ACCESS_KEY_ID"
+            exit 1
+          fi
+
+      - name: "Check secret exists: 'AWS_SECRET_ACCESS_KEY'"
+        run: |
+          if [ "${{ secrets.AWS_SECRET_ACCESS_KEY }}" == '' ]; then
+            echo "Missing secret: AWS_SECRET_ACCESS_KEY"
+            exit 1
+          fi
+
+      - name: Set DEPLOY_ENV to dev
+        if: ${{ endsWith(github.ref, '/dev') }}
+        run: echo "DEPLOY_ENV=dev" >> $GITHUB_ENV
+
+      - name: Set DEPLOY_ENV to prod
+        if: ${{ endsWith(github.ref, '/prod') }}
+        run: echo "DEPLOY_ENV=prod" >> $GITHUB_ENV
+
+      - name: Make sure DEPLOY_ENV was set correctly
+        if: ${{ env.DEPLOY_ENV != 'dev' && env.DEPLOY_ENV != 'prod' }}
+        run: |
+          echo "DEPLOY_ENV must be either 'dev' or 'prod'"
+          echo "got '${{ env.DEPLOY_ENV }}'"
+          exit 1
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Remove dev dependencies
+        run: npm ci --omit=dev
+
+      - name: Make ZIP directory
+        run: mkdir dist-zip
+
+      - name: Compress build to ZIP file
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r ./dist-zip/dist.zip dist node_modules index.mjs package.json
+
+      - name: Deploy to AWS Lambda
+        uses: appleboy/lambda-action@v0.1.9
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ env.AWS_REGION }}
+          function_name: ${{ env.PACKAGE_NAME }}-${{ env.DEPLOY_ENV }}
+          zip_file: ./dist-zip/dist.zip
+          runtime: nodejs18.x

@@ -1,0 +1,43 @@
+{
+  "name": "github-actions-example-lambda",
+  "version": "1.0.0",
+  "description": "An example of a GitHub Actions workflow for a Node.js Lambda function",
+  "author": "Tom Shani <tom.shani@uniguest.com>",
+  "license": "MIT",
+  "main": "./dist/docker-handler.mjs",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/volara/volara-engine"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "scripts": {
+    "build": "tsc --noEmit false",
+    "lint": "eslint",
+    "start": "node .",
+    "test": "node --loader tsx/esm --test ./src/**/*.spec.mts",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^18.2.2",
+    "@types/aws-lambda": "^8.10.125",
+    "@types/node": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.40.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "prettier": "^3.0.3",
+    "tsx": "^3.14.0",
+    "typescript": "^5.2.2"
+  }
+}
